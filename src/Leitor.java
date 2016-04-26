@@ -25,9 +25,10 @@ public class Leitor {
 		int[] info = new int [4];
 		boolean colidiram = false;
 		int colisoesQuadro = 0;
+		int sucessosQuadro = 0;
 
 		int countTentativas = 0;
-
+		int count = 0;
 		while(estimativaI <=128){//esse while vai rodar duas vezes: p/ 64 e p/ 128 slots iniciais
 			
 			while(qntdeTags <= 1000){//esse vai rodar 10 vzs: p/ 100,200,...,1000 tags
@@ -35,7 +36,7 @@ public class Leitor {
 				while(countTentativas < qntdeTentativas){//esse vai rodar de acordo com um parâmetro do arquivo
 
 					//Lower Bound
-					while(!todasIdentificadas(tags)){//esse vai rodar até que o lower bound identifique todas as tags
+					/*while(!todasIdentificadas(tags)){//esse vai rodar até que o lower bound identifique todas as tags
 						info[3] += estimativa;
 
 						//neste for um numero aleatorio eh atribuido a cada tag nao lida e ela eh alocada num slot
@@ -69,6 +70,7 @@ public class Leitor {
 						if(colidiram){
 							estimativa = estimador.LowerBound(colisoesQuadro);
 							colisoesQuadro = 0;
+							colidiram = false;
 							slots = new int[estimativa][qntdeTags];
 						}
 
@@ -76,15 +78,13 @@ public class Leitor {
 					arqLB.println(info[0]+" "+info[1]+" "+info[2]+" "+info[3]+" ");
 					
 					//resetando variáveis para utilizar o Eom-Lee
-					tags = new boolean[qntdeTags];
-					colidiram = false;
+					tags = new boolean[qntdeTags];	
 					slots = new int[estimativaI][qntdeTags];
 					info = new int [4];
-					colisoesQuadro = 0;
 					estimativa = estimativaI;
-
+					*/
 					//Eom-Lee
-					/*while(!todasIdentificadas(tags)){//esse vai rodar até que o Eom-Lee identifique todas as tags
+					while(!todasIdentificadas(tags)){//esse vai rodar até que o Eom-Lee identifique todas as tags
 						info[3] += estimativa;
 
 						//neste for um numero aleatorio eh atribuido a cada tag nao lida e ela eh alocada num slot
@@ -106,22 +106,33 @@ public class Leitor {
 								if(slots[i][1] > 0){
 									colidiram = true;
 									info[1] += 1;
-									colisoesQuadro +=1;
+									colisoesQuadro += 1;
 								}else{
+									sucessosQuadro += 1;
 									info[0] += 1;
 									tags[slots[i][0]-1] = true;
 								}
 							}
 						}
-
+						System.out.println("loop aqui? "+ count+++"      "+estimativa +"          "+colisoesQuadro);
 						if(colidiram){
-							estimativa = estimador.EomLee(colisoesQuadro);// FALTAR IMPLEMENTAR O EOM-LEE
+							estimativa = estimador.EomLee(colisoesQuadro, sucessosQuadro, estimativa);// FALTAR IMPLEMENTAR O EOM-LEE
 							colisoesQuadro = 0;
+							sucessosQuadro = 0;
+							colidiram = false;
 							slots = new int[estimativa][qntdeTags];
 						}
-
-					}*/
+						//System.out.println("loop aqui? "+ count++);
+					}
+					arqEL.println(info[0]+" "+info[1]+" "+info[2]+" "+info[3]+" ");
+					
+					tags = new boolean[qntdeTags];	
+					slots = new int[estimativaI][qntdeTags];
+					info = new int [4];
+					estimativa = estimativaI;
+					
 					countTentativas ++;
+					System.out.println("------------------------ "+countTentativas);
 				}
 
 				qntdeTags += 100;
@@ -129,7 +140,7 @@ public class Leitor {
 				colidiram = false;
 				slots = new int[estimativaI][qntdeTags];
 				countTentativas = 0;
-
+				
 			}
 			//resetando os parâmetros para refazer os testes com 128 slots iniciais
 			qntdeTags = 100;
@@ -137,6 +148,7 @@ public class Leitor {
 			colidiram = false;
 			estimativaI *= 2;
 			slots = new int[estimativaI][qntdeTags];
+			
 
 		}
 		System.out.println("FIM");
@@ -175,8 +187,36 @@ class Estimador{
 		return colisoes*2;
 	}
 
-	public int EomLee(int colisoes){
-		return 0;
+	public int EomLee(int colisoes,int sucessos, int quadro){
+		int novaEstimativa = 0;
+		
+		double e = Math.E;
+		double gamaANT = 2;
+		double gamaATU = 0, betaK, umSobreBetaK, numerador, denominador = 0;
+		double diferenca =0;
+		
+		do{
+			
+			betaK = quadro/((gamaANT*colisoes) + sucessos);
+			umSobreBetaK = 1/betaK;
+			
+			numerador = 1 - Math.pow(e, umSobreBetaK*-1);
+			denominador = betaK*(1 - ((1 + umSobreBetaK)* Math.pow(e, umSobreBetaK*-1)));
+			
+			gamaATU = numerador/denominador;
+			
+			diferenca = (gamaANT - gamaATU)*(-1);
+			/*System.out.println((gamaANT - gamaATU)*(-1));
+			System.out.println(gamaANT+"   <<<<<<<ANTERIOR");
+			System.out.println(gamaATU+"   <<<<<<<ATUAL\n");*/
+			gamaANT = gamaATU;
+			
+		
+		}while(!(diferenca < 0.001));
+		
+		novaEstimativa = (int) (gamaATU * colisoes);
+		
+		return novaEstimativa;
 	}
 
 
