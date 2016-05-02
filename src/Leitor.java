@@ -29,9 +29,9 @@ public class Leitor {
 
 		int countTentativas = 0;
 		int count = 0;
-		while(estimativaI <=128){//esse while vai rodar duas vezes: p/ 64 e p/ 128 slots iniciais
+		//while(estimativaI <=128){//esse while vai rodar duas vezes: p/ 64 e p/ 128 slots iniciais
 			
-			while(qntdeTags <= 1000){//esse vai rodar 10 vzs: p/ 100,200,...,1000 tags
+			//while(qntdeTags <= 1000){//esse vai rodar 10 vzs: p/ 100,200,...,1000 tags
 
 				while(countTentativas < qntdeTentativas){//esse vai rodar de acordo com um parâmetro do arquivo
 
@@ -114,7 +114,16 @@ public class Leitor {
 								}
 							}
 						}
-						System.out.println("loop aqui? "+ count+++"      "+estimativa +"          "+colisoesQuadro);
+						
+						for (int i = 0; i < tags.length; i++) {
+							if(tags[i]){
+								System.out.print("1, ");
+							}else{
+								System.out.print("0, ");
+							}
+						}
+						System.out.println();
+						
 						if(colidiram){
 							estimativa = estimador.EomLee(colisoesQuadro, sucessosQuadro, estimativa);// FALTAR IMPLEMENTAR O EOM-LEE
 							colisoesQuadro = 0;
@@ -141,7 +150,7 @@ public class Leitor {
 				slots = new int[estimativaI][qntdeTags];
 				countTentativas = 0;
 				
-			}
+			//}
 			//resetando os parâmetros para refazer os testes com 128 slots iniciais
 			qntdeTags = 100;
 			tags = new boolean[qntdeTags];
@@ -150,7 +159,7 @@ public class Leitor {
 			slots = new int[estimativaI][qntdeTags];
 			
 
-		}
+		//}
 		System.out.println("FIM");
 
 
@@ -180,44 +189,3 @@ public class Leitor {
 	}
 }
 
-class Estimador{
-
-	//retorna a estimativa segundo o lower bound
-	public int LowerBound(int colisoes){
-		return colisoes*2;
-	}
-
-	public int EomLee(int colisoes,int sucessos, int quadro){
-		int novaEstimativa = 0;
-		
-		double e = Math.E;
-		double gamaANT = 2;
-		double gamaATU = 0, betaK, umSobreBetaK, numerador, denominador = 0;
-		double diferenca =0;
-		
-		do{
-			
-			betaK = quadro/((gamaANT*colisoes) + sucessos);
-			umSobreBetaK = 1/betaK;
-			
-			numerador = 1 - Math.pow(e, umSobreBetaK*-1);
-			denominador = betaK*(1 - ((1 + umSobreBetaK)* Math.pow(e, umSobreBetaK*-1)));
-			
-			gamaATU = numerador/denominador;
-			
-			diferenca = (gamaANT - gamaATU)*(-1);
-			/*System.out.println((gamaANT - gamaATU)*(-1));
-			System.out.println(gamaANT+"   <<<<<<<ANTERIOR");
-			System.out.println(gamaATU+"   <<<<<<<ATUAL\n");*/
-			gamaANT = gamaATU;
-			
-		
-		}while(!(diferenca < 0.001));
-		
-		novaEstimativa = (int) (gamaATU * colisoes);
-		
-		return novaEstimativa;
-	}
-
-
-}
