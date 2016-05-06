@@ -4,6 +4,9 @@ public class Leitor2 {
 	public static void main(String[] args) {
 		Arquivo arqLB = new Arquivo("Parametros.in", "DadosLB.out");
 		Arquivo arqEL = new Arquivo("Parametros.in", "DadosEL.out");
+		Arquivo arqP1 = new Arquivo("Parametros.in", "DadosP1.out");
+		Arquivo arqP2 = new Arquivo("Parametros.in", "DadosP2.out");
+		Arquivo arqP3 = new Arquivo("Parametros.in", "DadosP3.out");
 		Estimador estimador = new Estimador();
 
 		int qntdeTags = arqLB.readInt();
@@ -21,9 +24,10 @@ public class Leitor2 {
 		boolean colidiram = false;
 		int colisoesQuadro = 0;
 		int sucessosQuadro = 0;
+		int vaziosQuadro = 0;
 
 		int countTentativas = 0;
-		int metodo = 1; //indica qual estimador sera usado: 1= lower bound, 2 = eom-lee, 3 = o metodo do prof
+		int metodo = 4; //indica qual estimador sera usado: 1= lower bound, 2 = eom-lee, 3 = o metodo do prof
 
 		while(qntdeTags <= 1000){
 			while(countTentativas < qntdeTentativas){
@@ -45,6 +49,7 @@ public class Leitor2 {
 					for (int i = 0; i < estimativa; i++) {
 						if(slots[i][0] == 0){
 							info[2] += 1;
+							vaziosQuadro += 1;
 
 						}else if(slots[i][0] > 0){
 
@@ -61,7 +66,7 @@ public class Leitor2 {
 					}
 
 					
-
+					System.out.println("col: "+colisoesQuadro + " suc: "+sucessosQuadro + " lidas: "+ info[0]);
 					if(colidiram){
 						switch(metodo){
 						case 1:
@@ -75,13 +80,26 @@ public class Leitor2 {
 							break;
 
 						case 3:
+							estimativa = estimador.p1(estimativa, colisoesQuadro, sucessosQuadro);
+							
+							
+							break;
+							
+						case 4:
+							estimativa = estimador.p2(vaziosQuadro, estimativa, colisoesQuadro);
+							break;
+							
+						case 5:
+							estimativa = estimador.p3(colisoesQuadro, sucessosQuadro, estimativa);
 							break;
 						}
 
 
 					}
+					System.out.println("ESTIMATIVA " + estimativa+"\n");
 					colisoesQuadro = 0;
 					sucessosQuadro = 0;
+					vaziosQuadro = 0;
 					colidiram = false;
 					slots = new int[estimativa][qntdeTags];
 				}
@@ -90,8 +108,12 @@ public class Leitor2 {
 					arqLB.println(info[0]+" "+info[1]+" "+info[2]+" "+info[3]+" ");
 				}else if(metodo == 2){
 					arqEL.println(info[0]+" "+info[1]+" "+info[2]+" "+info[3]+" ");
+				}else if(metodo == 3){
+					arqP1.println(info[0]+" "+info[1]+" "+info[2]+" "+info[3]+" ");
+				}else if(metodo == 4){
+					arqP2.println(info[0]+" "+info[1]+" "+info[2]+" "+info[3]+" ");
 				}else{
-
+					arqP3.println(info[0]+" "+info[1]+" "+info[2]+" "+info[3]+" ");
 				}
 
 				info = new int [4];
@@ -102,14 +124,28 @@ public class Leitor2 {
 			
 			qntdeTags += 100;
 			countTentativas = 0;
-			if(qntdeTags > 1000 && metodo == 1){
+			if(qntdeTags > 1000 && metodo < 5 ){
 				qntdeTags = 100;
-				metodo = 2;
-				System.out.println("Agora eh o eom-lee");
+				metodo += 1;
+				System.out.println("agr eh o metodo "+metodo);
+				switch(metodo){
+				case 2:
+					arqLB.close();
+					break;
+				case 3:
+					arqEL.close();
+					break;
+				case 4:
+					arqP1.close();
+					break;
+				case 5:
+					arqP2.close();
+					break;
+				}
 			}
 			
 		}
-		
+		arqP3.close();
 		System.out.println("FIM");
 	}
 
@@ -156,6 +192,7 @@ class Tag{
 	void rand(int Str, int End) {
 		r = (int) Math.ceil(Math.random() * (End  - Str + 1)) - 1 + Str;
 		r -= 1;
+		//System.out.println(r);
 	}
 }
 
@@ -172,7 +209,7 @@ class Estimador{
 		double gamaANT = 2;
 		double gamaATU = 0, betaK = 0;
 		double diferenca =0;
-		System.out.println("\ncolisoes: "+colisoes+" /sucessos: "+sucessos +" /quadro: "+quadro);
+		
 		do{
 
 			betaK = quadro/((gamaANT* (double) colisoes) + (double) sucessos);
@@ -189,9 +226,53 @@ class Estimador{
 		}while(!(diferenca < 0.001));
 
 		novaEstimativa = (gamaATU * colisoes);
-		System.out.println("prox quadro: "+novaEstimativa +"\n\n");
+		//System.out.println("prox quadro: "+novaEstimativa +"\n\n");
 		return (int) Math.round(novaEstimativa);
 	}
 
-
+	public int p1(int quadro, int colisoes, int sucessos){
+		double L = quadro;
+		double alfa = (L - 1)/L;
+		double col = colisoes;
+		double suc = sucessos;
+		double en = col + suc;
+		
+		double n = (Math.log10(1-(1 - alfa)*en))/Math.log10(alfa);
+		
+		
+		return (int) Math.ceil(n);
+	}
+	
+	public int p2(int vazios, int quadro, int colisoes){
+		double V = vazios;
+		double L = quadro;
+		double col = colisoes;
+		double n = 0;
+		
+		if(vazios != 0){		
+			n = (Math.log10(V/L))/Math.log10(1-(1/L));
+		}else{
+			n = 2* col;
+		}
+		return (int) Math.ceil(n);
+	}
+	
+	
+	public int p3(int colisoes, int sucessos, int quadro){
+		double L = quadro;
+		double col = colisoes;
+		double suc = sucessos;
+		double n;
+		
+		int ret =0;
+		if(col != L){
+			n = EomLee(colisoes, sucessos, quadro);
+		}else{
+			n = (12.047)*(L -1)+ 2;
+			n = Math.ceil(n-suc);
+		}
+		ret = (int) n;
+		
+		return ret;
+	}
 }
