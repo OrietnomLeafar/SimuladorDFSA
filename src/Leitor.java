@@ -2,9 +2,11 @@
 public class Leitor {
 
 	public static void main(String[] args) {
-
 		Arquivo arqLB = new Arquivo("Parametros.in", "DadosLB.out");
 		Arquivo arqEL = new Arquivo("Parametros.in", "DadosEL.out");
+		Arquivo arqP1 = new Arquivo("Parametros.in", "DadosP1.out");
+		Arquivo arqP2 = new Arquivo("Parametros.in", "DadosP2.out");
+		Arquivo arqP3 = new Arquivo("Parametros.in", "DadosP3.out");
 		Estimador estimador = new Estimador();
 
 		int qntdeTags = arqLB.readInt();
@@ -12,176 +14,174 @@ public class Leitor {
 		int qntdeTentativas = arqLB.readInt();
 		int estimativa = estimativaI;
 
-		boolean[] tags = new boolean[qntdeTags];//array que diz quais tags foram reconhecidas
+		Tag[] tags = new Tag[qntdeTags];//array que diz quais tags foram reconhecidas
+
+		tags = inicializar(qntdeTags);
 
 		int[][] slots = new int[estimativaI][qntdeTags];//array pra alocar tags nos slots
 
-		int r; //num aleatorio
-
-		/*
-		 * a variavel info vai armazenar as quantidades de slots vazios, colisoes, sucessos e slots totais
-		 * info[0] = sucessos/ info[1] = colisoes/ info[2] = vazios/ info[3] = slots
-		 * */
 		int[] info = new int [4];
 		boolean colidiram = false;
-		int colisoesQuadro = 0;
+		int colisoesQuadro = 1;
 		int sucessosQuadro = 0;
+		int vaziosQuadro = 0;
+		int lidas = 0;
 
 		int countTentativas = 0;
-		int count = 0;
-		//while(estimativaI <=128){//esse while vai rodar duas vezes: p/ 64 e p/ 128 slots iniciais
-			
-			//while(qntdeTags <= 1000){//esse vai rodar 10 vzs: p/ 100,200,...,1000 tags
+		int metodo = 1; //indica qual estimador sera usado: 1= lower bound, 2 = eom-lee, 3 = o metodo do prof
 
-				while(countTentativas < qntdeTentativas){//esse vai rodar de acordo com um parâmetro do arquivo
+		while(qntdeTags <= 1000){
+			while(countTentativas < qntdeTentativas){
 
-					//Lower Bound
-					/*while(!todasIdentificadas(tags)){//esse vai rodar até que o lower bound identifique todas as tags
-						info[3] += estimativa;
+				tags = inicializar(qntdeTags);
+				slots = new int[estimativaI][qntdeTags];
+				
+				while(colisoesQuadro > 0){
+					colisoesQuadro = 0;
+					sucessosQuadro = 0;
+					vaziosQuadro = 0;
+					
+					info[3] += estimativa;
 
-						//neste for um numero aleatorio eh atribuido a cada tag nao lida e ela eh alocada num slot
-						for (int tag = 0; tag < tags.length; tag++) {
+					//neste for um numero aleatorio eh atribuido a cada tag nao lida e ela eh alocada num slot
+					for (int i = 0; i < tags.length; i++) {
+						if(!tags[i].foiLida){
+							tags[i].rand(1, 100);
+							int p = tags[i].r;
+							tags[i].rand(1, estimativa);
 							
-							if(!tags[tag]){     //se a tag ja foi lida (true) nao e preciso gerar um numero pra ela
-
-								r = rand(1,estimativa)-1;     //sorteia um numero aleatorio dentre os possiveis
-								alocarTag(slots, tag, r, qntdeTags);     //aloca a tag em um slot
+							if(p > 9) {
+								alocarTag(slots, tags[i], tags.length);
 							}
 						}
-
-						//for para verificar sucessos, colisoes e vazios
-						for (int i = 0; i < estimativa; i++) {
-							if(slots[i][0] == 0){
-								info[2] += 1;
-
-							}else if(slots[i][0] > 0){
-
-								if(slots[i][1] > 0){
-									colidiram = true;
-									info[1] += 1;
-									colisoesQuadro +=1;
-								}else{
-									info[0] += 1;
-									tags[slots[i][0]-1] = true;
-								}
-							}
-						}
-
-						if(colidiram){
-							estimativa = estimador.LowerBound(colisoesQuadro);
-							colisoesQuadro = 0;
-							colidiram = false;
-							slots = new int[estimativa][qntdeTags];
-						}
-
 					}
-					arqLB.println(info[0]+" "+info[1]+" "+info[2]+" "+info[3]+" ");
-					
-					//resetando variáveis para utilizar o Eom-Lee
-					tags = new boolean[qntdeTags];	
-					slots = new int[estimativaI][qntdeTags];
-					info = new int [4];
-					estimativa = estimativaI;
-					*/
-					//Eom-Lee
-					while(!todasIdentificadas(tags)){//esse vai rodar até que o Eom-Lee identifique todas as tags
-						info[3] += estimativa;
+					//for para verificar sucessos, colisoes e vazios
+					for (int i = 0; i < estimativa; i++) {
+						if(slots[i][0] == 0){
+							info[2] += 1;
+							vaziosQuadro += 1;
 
-						//neste for um numero aleatorio eh atribuido a cada tag nao lida e ela eh alocada num slot
-						for (int tag = 0; tag < tags.length; tag++) {
-							if(!tags[tag]){     //se a tag ja foi lida (true) nao e preciso gerar um numero pra ela
+						}else if(slots[i][0] > 0){
 
-								r = rand(1,estimativa)-1;     //sorteia um numero aleatorio dentre os possiveis
-								alocarTag(slots, tag, r, qntdeTags);     //aloca a tag em um slot
-							}
-						}
-
-						//for para verificar sucessos, colisoes e vazios
-						for (int i = 0; i < estimativa; i++) {
-							if(slots[i][0] == 0){
-								info[2] += 1;
-
-							}else if(slots[i][0] > 0){
-
-								if(slots[i][1] > 0){
-									colidiram = true;
-									info[1] += 1;
-									colisoesQuadro += 1;
-								}else{
-									sucessosQuadro += 1;
-									info[0] += 1;
-									tags[slots[i][0]-1] = true;
-								}
-							}
-						}
-						
-						for (int i = 0; i < tags.length; i++) {
-							if(tags[i]){
-								System.out.print("1, ");
+							if(slots[i][1] > 0){
+								colidiram = true;
+								info[1] += 1;
+								colisoesQuadro += 1;
 							}else{
-								System.out.print("0, ");
+								sucessosQuadro += 1;
+								info[0] += 1;
+								tags[slots[i][0]-1].foiLida = true;
+								lidas += 1;
 							}
 						}
-						System.out.println();
-						
-						if(colidiram){
-							estimativa = estimador.EomLee(colisoesQuadro, sucessosQuadro, estimativa);// FALTAR IMPLEMENTAR O EOM-LEE
-							colisoesQuadro = 0;
-							sucessosQuadro = 0;
-							colidiram = false;
-							slots = new int[estimativa][qntdeTags];
-						}
-						//System.out.println("loop aqui? "+ count++);
 					}
-					arqEL.println(info[0]+" "+info[1]+" "+info[2]+" "+info[3]+" ");
+
 					
-					tags = new boolean[qntdeTags];	
-					slots = new int[estimativaI][qntdeTags];
-					info = new int [4];
-					estimativa = estimativaI;
-					
-					countTentativas ++;
-					System.out.println("------------------------ "+countTentativas);
+					System.out.println("col: "+colisoesQuadro + " suc: "+sucessosQuadro + " lidas: "+ info[0]);
+					if(colidiram){
+						switch(metodo){
+						case 1:
+							estimativa = estimador.LowerBound(colisoesQuadro);
+
+							break;
+
+						case 2:
+							estimativa = estimador.EomLee(colisoesQuadro, sucessosQuadro, estimativa);
+
+							break;
+
+						case 3:
+							estimativa = estimador.p1(estimativa, colisoesQuadro, sucessosQuadro, vaziosQuadro);
+							
+							
+							break;
+							
+						case 4:
+							estimativa = estimador.p2(vaziosQuadro, estimativa, colisoesQuadro);
+							break;
+							
+						case 5:
+							estimativa = estimador.p3(colisoesQuadro, sucessosQuadro, estimativa);
+							break;
+						}
+
+
+					}
+					System.out.println("ESTIMATIVA " + estimativa+"\n");
+					colidiram = false;
+					slots = new int[estimativa][qntdeTags];
+				}
+				colisoesQuadro = 1;
+
+				if(metodo == 1){
+					arqLB.println(lidas+" "+info[1]+" "+info[2]+" "+info[3]+" ");
+				}else if(metodo == 2){
+					arqEL.println(lidas+" "+info[1]+" "+info[2]+" "+info[3]+" ");
+				}else if(metodo == 3){
+					arqP1.println(lidas+" "+info[1]+" "+info[2]+" "+info[3]+" ");
+				}else if(metodo == 4){
+					arqP2.println(lidas+" "+info[1]+" "+info[2]+" "+info[3]+" ");
+				}else{
+					arqP3.println(info[0]+" "+info[1]+" "+info[2]+" "+info[3]+" ");
 				}
 
-				qntdeTags += 100;
-				tags = new boolean[qntdeTags];
-				colidiram = false;
-				slots = new int[estimativaI][qntdeTags];
-				countTentativas = 0;
-				
-			//}
-			//resetando os parâmetros para refazer os testes com 128 slots iniciais
-			qntdeTags = 100;
-			tags = new boolean[qntdeTags];
-			colidiram = false;
-			estimativaI *= 2;
-			slots = new int[estimativaI][qntdeTags];
+				info = new int [4];
+				estimativa = estimativaI;
+
+				countTentativas ++;
+				lidas = 0;
+			}
 			
-
-		//}
+			qntdeTags += 100;
+			countTentativas = 0;
+			if(qntdeTags > 1000 && metodo < 5 ){
+				qntdeTags = 100;
+				metodo += 1;
+				System.out.println("agr eh o metodo "+metodo);
+				switch(metodo){
+				case 2:
+					arqLB.close();
+					break;
+				case 3:
+					arqEL.close();
+					break;
+				case 4:
+					arqP1.close();
+					break;
+				case 5:
+					arqP2.close();
+					break;
+				}
+			}
+			
+		}
+		arqP3.close();
 		System.out.println("FIM");
-
-
 	}
 
-
-	static void alocarTag(int[][] slots, int tag, int valor, int tagsTotais){
+	static void alocarTag(int[][] slots, Tag tag, int tagsTotais){
+		int s = tag.r;
 		for (int i = 0; i < tagsTotais; i++) {
-			if(slots[valor][i]==0){
-				slots[valor][i] = tag+1;
+			if(slots[s][i] == 0){
+				slots[s][i] = tag.id;
 				return;
 			}
 		}
 	}
 
-	static int rand(int Str, int End) {
-		return (int) Math.ceil(Math.random() * (End  - Str + 1)) - 1 + Str;
+	static Tag[] inicializar(int qntdeTags){
+		Tag[] t = new Tag[qntdeTags];
+
+		for (int i = 0; i < t.length; i++) {
+			t[i]= new Tag(false, i+1);
+		}
+
+		return t;
 	}
 
-	static boolean todasIdentificadas(boolean[] tags){
+	static boolean todasIdentificadas(Tag[] tags){
 		for (int i = 0; i < tags.length; i++) {
-			if(tags[i] == false){
+			if(tags[i].foiLida == false){
 				return false;
 			}
 		}

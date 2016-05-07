@@ -1,6 +1,8 @@
 
 public class Leitor2 {
-
+	/*
+	 * 0% DE PERDA
+	 */
 	public static void main(String[] args) {
 		Arquivo arqLB = new Arquivo("Parametros.in", "DadosLB.out");
 		Arquivo arqEL = new Arquivo("Parametros.in", "DadosEL.out");
@@ -27,7 +29,7 @@ public class Leitor2 {
 		int vaziosQuadro = 0;
 
 		int countTentativas = 0;
-		int metodo = 4; //indica qual estimador sera usado: 1= lower bound, 2 = eom-lee, 3 = o metodo do prof
+		int metodo = 1; //indica qual estimador sera usado: 1= lower bound, 2 = eom-lee, 3 = o metodo do prof
 
 		while(qntdeTags <= 1000){
 			while(countTentativas < qntdeTentativas){
@@ -80,7 +82,7 @@ public class Leitor2 {
 							break;
 
 						case 3:
-							estimativa = estimador.p1(estimativa, colisoesQuadro, sucessosQuadro);
+							estimativa = estimador.p1(estimativa, colisoesQuadro, sucessosQuadro, vaziosQuadro);
 							
 							
 							break;
@@ -230,17 +232,24 @@ class Estimador{
 		return (int) Math.round(novaEstimativa);
 	}
 
-	public int p1(int quadro, int colisoes, int sucessos){
+	public int p1(int quadro, int colisoes, int sucessos, int vazios){
+		
 		double L = quadro;
 		double alfa = (L - 1)/L;
 		double col = colisoes;
 		double suc = sucessos;
 		double en = col + suc;
 		
-		double n = (Math.log10(1-(1 - alfa)*en))/Math.log10(alfa);
+		int ret = 0;
+		if(vazios == 0) {
+			ret = LowerBound(colisoes);
+		} else {
+			double n = (Math.log10(1-(1 - alfa)*en))/Math.log10(alfa);
+			ret = (int) Math.ceil(n);
+		}
 		
 		
-		return (int) Math.ceil(n);
+		return ret;
 	}
 	
 	public int p2(int vazios, int quadro, int colisoes){
