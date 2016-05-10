@@ -1,12 +1,14 @@
 
 public class Leitor {
-
+	/*
+	 * 10% DE PERDA
+	 */
 	public static void main(String[] args) {
-		Arquivo arqLB = new Arquivo("Parametros.in", "DadosLB.out");
-		Arquivo arqEL = new Arquivo("Parametros.in", "DadosEL.out");
-		Arquivo arqP1 = new Arquivo("Parametros.in", "DadosP1.out");
-		Arquivo arqP2 = new Arquivo("Parametros.in", "DadosP2.out");
-		Arquivo arqP3 = new Arquivo("Parametros.in", "DadosP3.out");
+		Arquivo arqLB = new Arquivo("Parametros.in", "CpDadosLB.out");
+		Arquivo arqEL = new Arquivo("Parametros.in", "CpDadosEL.out");
+		Arquivo arqP1 = new Arquivo("Parametros.in", "CpDadosP1.out");
+		Arquivo arqP2 = new Arquivo("Parametros.in", "CpDadosP2.out");
+		Arquivo arqP3 = new Arquivo("Parametros.in", "CpDadosP3.out");
 		Estimador estimador = new Estimador();
 
 		int qntdeTags = arqLB.readInt();
@@ -25,6 +27,7 @@ public class Leitor {
 		int colisoesQuadro = 1;
 		int sucessosQuadro = 0;
 		int vaziosQuadro = 0;
+
 		int lidas = 0;
 
 		int countTentativas = 0;
@@ -114,15 +117,15 @@ public class Leitor {
 				colisoesQuadro = 1;
 
 				if(metodo == 1){
-					arqLB.println(lidas+" "+info[1]+" "+info[2]+" "+info[3]+" ");
+					arqLB.println(lidas+" "+info[1]+" "+info[2]+" "+info[3]+" "+(qntdeTags - lidas));
 				}else if(metodo == 2){
-					arqEL.println(lidas+" "+info[1]+" "+info[2]+" "+info[3]+" ");
+					arqEL.println(lidas+" "+info[1]+" "+info[2]+" "+info[3]+" "+(qntdeTags - lidas));
 				}else if(metodo == 3){
-					arqP1.println(lidas+" "+info[1]+" "+info[2]+" "+info[3]+" ");
+					arqP1.println(lidas+" "+info[1]+" "+info[2]+" "+info[3]+" "+(qntdeTags - lidas));
 				}else if(metodo == 4){
-					arqP2.println(lidas+" "+info[1]+" "+info[2]+" "+info[3]+" ");
+					arqP2.println(lidas+" "+info[1]+" "+info[2]+" "+info[3]+" "+(qntdeTags - lidas));
 				}else{
-					arqP3.println(info[0]+" "+info[1]+" "+info[2]+" "+info[3]+" ");
+					arqP3.println(info[0]+" "+info[1]+" "+info[2]+" "+info[3]+" "+(qntdeTags - lidas));
 				}
 
 				info = new int [4];
